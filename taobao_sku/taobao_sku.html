@@ -1,0 +1,233 @@
+<!--
+ * @Author: yaco
+ * @Description: 淘宝商品选择联动
+ * @Date: 2022-04-28 
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div class="info-line" v-for="key  in  Object.keys(menuInfo)" :key="key">
+        <div class="info-title">{{ menuInfo[key].title }}:</div>
+        <div class="info-list">
+          <div
+            :class="{active : menuInfo[key].activeIdx === idx , disabled :item.disabled}"
+            class="info-item"
+            v-for="(item,idx) in menuInfo[key].arr"
+            :key="item.value"
+            @click="itemClick(item, key , idx)"
+          >
+            {{item.value}}
+          </div>
+        </div>
+      </div>
+
+      <p>当前筛选条件</p>
+      <div>{{filterList}}</div>
+      <p>当前结果数据</p>
+      <div>{{resList}}</div>
+    </div>
+
+    <script>
+      try {
+        new Vue({
+          el: '#app',
+          data: {
+            // 当前所有款式 尺寸 等
+            menuInfo: {
+              size: {
+                activeIdx: -1,
+                title: '大小',
+                arr: [
+                  {
+                    value: 'XS',
+                    disabled: false,
+                  },
+                  {
+                    value: 'S',
+                    disabled: false,
+                  },
+                  {
+                    value: 'M',
+                    disabled: false,
+                  },
+                  {
+                    value: 'L',
+                    disabled: false,
+                  },
+                ],
+              },
+              color: {
+                activeIdx: -1,
+                title: '颜色',
+                arr: [
+                  {
+                    value: '红色',
+                    disabled: false,
+                  },
+                  {
+                    value: '绿色',
+                    disabled: false,
+                  },
+                  {
+                    value: '蓝色',
+                    disabled: false,
+                  },
+                  {
+                    value: '黑色',
+                    disabled: false,
+                  },
+                ],
+              },
+              material: {
+                activeIdx: -1,
+                title: '面料',
+                arr: [
+                  {
+                    value: '涤纶',
+                    disabled: false,
+                  },
+                  {
+                    value: '纯棉',
+                    disabled: false,
+                  },
+                  {
+                    value: '人造革',
+                    disabled: false,
+                  },
+                ],
+              },
+            },
+            // 库存
+            infoArr: [
+              {
+                color: '红色',
+                size: 'S',
+                material: '人造革',
+                num: 50,
+                price: 84,
+              },
+              {
+                color: '黑色',
+                size: 'M',
+                material: '涤纶',
+                num: 50,
+                price: 84,
+              },
+              {
+                color: '黑色',
+                size: 'L',
+                material: '涤纶',
+                num: 30,
+                price: 84,
+              },
+              {
+                color: '蓝色',
+                size: 'L',
+                material: '纯棉',
+                num: 20,
+                price: 84,
+              },
+            ],
+            // 筛选条件数组
+            filterList: [],
+            // 结果数组
+            resList: [],
+          },
+
+          methods: {
+            // 用户选择
+            itemClick(item, key, idx) {
+              const filterIdx = this.filterList.findIndex((item) => item.key === key);
+              // 已经选择的 再次点击取消选择
+              if (this.menuInfo[key].activeIdx === idx) {
+                this.menuInfo[key].activeIdx = -1;
+                if (filterIdx > -1) this.filterList.splice(filterIdx, 1);
+              } else {
+                // 未选择 | 更改选择 进栈
+                if (!item.disabled) {
+                  this.menuInfo[key].activeIdx = idx;
+                  if (filterIdx > -1) {
+                    this.filterList.splice(filterIdx, 1, {
+                      key,
+                      value: item.value,
+                    });
+                  } else {
+                    this.filterList.push({
+                      key,
+                      value: item.value,
+                    });
+                  }
+                }
+              }
+              this.refreshDom();
+            },
+            // 刷新页面选择栏
+            refreshDom() {
+              // 更新结果数组
+              this.resList = [...this.infoArr];
+              for (let i = 0; i < this.filterList.length; i++) {
+                const filterItem = this.filterList[i];
+                this.resList = [...this.resList.filter((item) => item[filterItem.key] === filterItem.value)];
+              }
+              // 遍历选择列表
+              Object.keys(this.menuInfo).forEach((key) => {
+                this.menuInfo[key].arr.forEach((item) => {
+                  const it = this.resList.find((subItem) => subItem[key] === item.value);
+                  item.disabled = it ? false : true;
+                });
+              });
+            },
+          },
+
+          mounted() {
+            this.refreshDom();
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    </script>
+  </body>
+
+  <style>
+    .info-line {
+      padding-top: 20px;
+    }
+
+    .info-title {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .info-list {
+      display: flex;
+      column-gap: 20px;
+      padding-top: 10px;
+    }
+
+    .info-item {
+      padding: 4px 10px;
+      border: 1px solid #000;
+      display: inline-block;
+      cursor: pointer;
+      font-size: 12px;
+      /* color: #999; */
+    }
+
+    .info-item.active {
+      color: red;
+      border-color: red;
+    }
+
+    .info-item.disabled {
+      color: #999;
+      border-color: #999;
+      cursor: not-allowed;
+    }
+  </style>
+</html>
