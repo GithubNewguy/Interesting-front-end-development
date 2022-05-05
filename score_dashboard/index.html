@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>自定义分数仪表盘</title>
+    <script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+    <style>
+      .dash-board-container {
+        position: absolute;
+        width: 300px;
+        height: 240px;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .curve-content {
+        position: absolute;
+        width: 76px;
+        height: 260px;
+        left: 110px;
+        top: 50px;
+      }
+      .abs {
+        font-size: 12px;
+        color: #14181f;
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+      }
+
+      .scale-start {
+        position: absolute;
+        left: 0;
+        top: 30px;
+        transform: rotate(-10deg);
+        font-size: 12px;
+        color: #c5cfd5;
+      }
+
+      .scale-end {
+        position: absolute;
+        right: 0;
+        top: 30px;
+        transform: rotate(20deg);
+        font-size: 12px;
+        color: #c5cfd5;
+      }
+
+      .pointer-line {
+        transform: rotate(-90deg);
+        transition: transform 2s ease;
+      }
+
+      /* 圆心 */
+      .circle-center {
+        position: absolute;
+        box-sizing: border-box;
+        border: 2px solid #14181f;
+        border-radius: 50%;
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, 0);
+      }
+
+      /* 指针 */
+      .line {
+        position: absolute;
+        height: 70px;
+        width: 2px;
+        border-radius: 1px;
+        background: #14181f;
+        display: inline-block;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 50px;
+        box-shadow: 4px -1px 3px rgba(212, 219, 229, 0.55);
+      }
+
+      /* 表盘 */
+      .dial {
+        z-index: -1;
+        width: 224px;
+        height: 240px;
+        border-radius: 50%;
+        border: 1px solid #f0f0f0;
+        top: 68px;
+        left: 36px;
+        background-image: linear-gradient(#f4f6f8, #fff, #fff);
+      }
+
+      .dial::after {
+        content: '';
+        position: absolute;
+        height: 122px;
+        width: 226px;
+        bottom: 0;
+        background: #fff;
+        left: -1px;
+      }
+
+      /* 说明 */
+      .intro-part {
+        z-index: 2;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+      .intro-part > div:nth-child(1) {
+        font-size: 12px;
+        text-align: center;
+        color: #a5b0bd;
+      }
+
+      .score {
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+      }
+      .score > span:nth-child(1) {
+        font-size: 44px;
+      }
+
+      .score > span:nth-child(2) {
+        position: absolute;
+        font-size: 12px;
+        border: 0.5px solid #000;
+        border-radius: 4px;
+        padding: 0 6px;
+        top: 13px;
+        left: 110%;
+        word-break: keep-all;
+      }
+
+      .num-enter {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        column-gap: 20px;
+        top: 20%;
+        width: 100%;
+      }
+
+      .confirm-btn {
+        display: inline-block;
+        padding: 4px 10px;
+        background: #2483ff;
+        color: #fff;
+        border-radius: 2px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .confirm-btn:hover {
+        opacity: 0.8;
+      }
+
+      .score-input {
+        height: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="dash-board-container">
+        <!-- 圆框 -->
+        <div
+          class="curve-content"
+          v-for="(item , index) in curveArr"
+          :key="item.label"
+          :style="{transform:item.rotate}"
+        >
+          <span class="abs" :style="{top : item.textDistance}">{{ item.label }}</span>
+          <svg width="76" height="10" viewBox="0 0 76 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M2.25977 7.0563C13.6028 3.76454 25.5953 2 37.9998 2C50.4061 2 62.4002 3.76501 73.7445 7.05764"
+              :stroke="item.color"
+              stroke-width="4"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span v-if="index === 0" class="scale-start"> 0 </span>
+          <span class="scale-end"> {{ item.max }} </span>
+        </div>
+        <div class="curve-content pointer-line" :style="{transform : `rotate(${deflexionNum}deg)`}">
+          <!-- 圆心 -->
+          <span class="circle-center"> </span>
+          <!-- 指针 -->
+          <span class="line"> </span>
+        </div>
+        <!-- 表盘 -->
+        <div class="curve-content dial"></div>
+        <!-- 指数 -->
+        <div class="intro-part">
+          <div>指数</div>
+          <div class="score">
+            <span :style="{color:scoreColor.fontColor}">{{ scoreNum }}</span>
+            <span
+              :style="{color:scoreColor.fontColor , background :scoreColor.signBgColor , borderColor: scoreColor.signBorderColor }"
+            >
+              {{ scoreColor.label }}</span
+            >
+          </div>
+        </div>
+      </div>
+      <!-- 输入框 -->
+      <div class="num-enter">
+        <input placeholder="please enter score" v-model="inputNum" class="score-input" type="number" />
+        <span class="confirm-btn" @click="showScore">确定</span>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  try {
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          // 分数
+          scoreNum: 0,
+          // 输入框数据
+          inputNum: null,
+          // 仪表盘颜色
+          curveArr: [
+            {
+              color: '#D14B64',
+              rotate: 'rotate(-75deg)',
+              textDistance: '-30px',
+              label: '极度恐慌',
+              max: 25,
+            },
+            {
+              color: '#ED94A4',
+              rotate: 'rotate(-37.5deg)',
+              textDistance: '-20px',
+              label: '恐慌',
+              max: 46,
+            },
+            {
+              color: '#C5CFD5',
+              rotate: 'rotate(0deg)',
+              textDistance: '-20px',
+              label: '中性',
+              max: 54,
+            },
+            {
+              color: '#9FB6F1',
+              rotate: 'rotate(37.5deg)',
+              textDistance: '-20px',
+              label: '贪婪',
+              max: 75,
+            },
+            {
+              color: '#2C61F4',
+              rotate: 'rotate(75deg)',
+              textDistance: '-30px',
+              label: '极度贪婪',
+              max: 100,
+            },
+          ],
+          // 分数颜色枚举
+          scroeColorArr: [
+            {
+              // 极度恐慌
+              fontColor: '#D14B64',
+              signBgColor: 'rgba(209, 75, 100, 0.1)',
+              signBorderColor: 'rgba(209, 75, 100, 0.3)',
+              label: '极度恐慌',
+            },
+            {
+              // 恐慌
+              fontColor: '#F07A90',
+              signBgColor: 'rgba(240, 122, 144, 0.1)',
+              signBorderColor: 'rgba(240, 122, 144, 0.3)',
+              label: '恐慌',
+            },
+            {
+              // 中性
+              fontColor: '#A6B8C2',
+              signBgColor: 'rgba(166, 184, 194, 0.1)',
+              signBorderColor: 'rgba(166, 184, 194, 0.3)',
+              label: '中性',
+            },
+            {
+              // 贪婪
+              fontColor: '#7698F2',
+              signBgColor: 'rgba(118, 152, 242, 0.1)',
+              signBorderColor: 'rgba(118, 152, 242, 0.3)',
+              label: '贪婪',
+            },
+            {
+              // 极度贪婪
+              fontColor: '#2C61F4',
+              signBgColor: 'rgba(44, 97, 244, 0.1)',
+              signBorderColor: 'rgba(44, 97, 244, 0.3)',
+              label: '极度贪婪',
+            },
+          ],
+        };
+      },
+
+      computed: {
+        deflexionNum() {
+          const { scoreNum, curveArr } = this;
+          let idx = 0;
+          for (let i = 0; i < curveArr.length; i++) {
+            if (scoreNum > curveArr[i].max) {
+              continue;
+            }
+            idx = i;
+            break;
+          }
+          const diff = idx === 0 ? scoreNum : scoreNum - curveArr[idx - 1].max;
+          // 区间百分比
+          const percent = idx === 0 ? diff / 25 : diff / (curveArr[idx].max - curveArr[idx - 1].max);
+          // 180deg 五等分 一份 36deg
+          return (36 * (idx + percent) - 90).toFixed(0);
+        },
+
+        // 分数颜色
+        scoreColor() {
+          const { scoreNum, curveArr } = this;
+          let idx = 0;
+          for (let i = 0; i < curveArr.length; i++) {
+            if (scoreNum > curveArr[i].max) {
+              continue;
+            }
+            idx = i;
+            break;
+          }
+          return this.scroeColorArr[idx];
+        },
+      },
+
+      methods: {
+        /**
+         * @description: 数值校验 + 显示
+         * @param {*}
+         * @return {*}
+         */
+        showScore() {
+          const { inputNum } = this;
+          if (inputNum < 0 || inputNum > 100) {
+            alert('scroe error , Scores range between 0 - 100 ');
+            return;
+          }
+          this.scoreNum = inputNum;
+        },
+      },
+    });
+  } catch (e) {
+    console.error(e);
+  }
+</script>
