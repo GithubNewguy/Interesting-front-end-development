@@ -19,6 +19,7 @@
 
 ### 项目描述
 
-> poisonous_chicken_soup ： 鸡汤软文  node 爬虫
-> taobao_sku : 淘宝商品选择联动
-> score_dashboard : 自定义分数表盘
+> chicken_soup ： 鸡汤软文  node 爬虫
+> taobao_sku : 淘宝商品选择联动  vue2
+> score_dashboard : 自定义分数表盘 vue2
+> ribbon_falldown : 自定义彩带飘落效果 js
